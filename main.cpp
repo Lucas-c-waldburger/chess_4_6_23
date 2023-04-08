@@ -30,9 +30,12 @@
 int main() {
 
     Board board;
+    board.printGridVisual();
 
+    board.movePiece(board.grid[0][1], board.grid[2][2]);
+//    board.movePiece(board.grid[2][0], board.grid[4][0]);
 
-    board.movePiece(board.grid[0][0], board.grid[1][4]);
+    board.printGridVisual();
 
 //    board.reportPieces(black);
 //

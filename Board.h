@@ -15,6 +15,7 @@ class Board {
 public:
     Board();
     Tile grid[8][8];
+    char gridVisual[8][8];
 
     std::vector<std::unique_ptr<Tile>> captureTiles;
     void captureNew(Tile& donorTile);
@@ -25,6 +26,9 @@ public:
     std::vector<std::string> getPieceNames(int color);
     void reportPieces();
     void reportPieces(int color);
+
+    void refreshGridVisual();
+    void printGridVisual();
 
 private:
 

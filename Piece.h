@@ -19,6 +19,7 @@ public:
 
     int color;
     std::string name;
+    char boardSymbol;
     std::pair<int, int> currentLocation;
     std::map<std::string, std::vector<std::pair<int, int>>> movement;
 
@@ -26,7 +27,7 @@ public:
     void updateLocation(std::pair<int, int> newLocation);
 
 //    std::vector<std::pair<int, int>> findMoves();
-    std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
+    virtual std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
 
 private:
 
@@ -42,6 +43,8 @@ private:
 class Pawn : public Piece {
 public:
     Pawn(int color, std::pair<int, int> currentLocation);
+    std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
+
 };
 
 class Rook : public Piece {

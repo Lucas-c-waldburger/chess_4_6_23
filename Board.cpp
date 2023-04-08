@@ -52,6 +52,10 @@ void Board::assignPieces() {
 }
 
 void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
+    if (currentTile.occupant == nullptr) {
+        throw std::invalid_argument("The selected tile has no piece on it");
+    }
+
     std::map<std::string, std::vector<std::pair<int, int>>> possibleMoves = currentTile.occupant->findMoves();
     std::cout << "Found Moves: ";
     for (auto& pair : possibleMoves) {
@@ -61,7 +65,6 @@ void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
         }
         std::cout << '\n';
     }
-
 
 //    std::cout << currentTile.occupant->currentLocation.first << "\n, " << currentTile.occupant->currentLocation.second << '\n';
     for (auto& pair : possibleMoves) {
@@ -82,7 +85,7 @@ void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
                 // if destination tile is eventually found in this movement direction, check if pathBlocked and
                 // that the piece is not a knight
                 if (pathBlocked && currentTile.occupant->name != "Knight") {
-                    throw std::invalid_argument("Path to destination is blocked by a piece");
+                    throw std::invalid_argument("Path to destination is blocked by another piece");
                 }
 
                 // at this point, our destination tile was found this movement direction and it's not blocked by
@@ -112,7 +115,7 @@ void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
             }
         }
     }
-    throw std::invalid_argument("requested destination is either out of range or not in the piece's moveset\n");
+    throw std::invalid_argument("Requested destination is either out of range or not in the piece's moveset\n");
 }
 
 
@@ -168,3 +171,53 @@ void Board::reportPieces(int color) {
         }
     }
 }
+
+void Board::refreshGridVisual() {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (grid[i][j].occupant != nullptr) {
+                gridVisual[i][j] = grid[i][j].occupant->boardSymbol;
+            }
+            else {
+                gridVisual[i][j] = ' ';
+            }
+        }
+    }
+}
+
+
+void Board::printGridVisual() {
+    refreshGridVisual();
+
+    std::cout << "   -----------------------------------------------------" << '\n';
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            if (col == 0) {
+                if (row == 0)
+                    std::cout << "8  ";
+                if (row == 1)
+                    std::cout << "7  ";
+                if (row == 2)
+                    std::cout << "6  ";
+                if (row == 3)
+                    std::cout << "5  ";
+                if (row == 4)
+                    std::cout << "4  ";
+                if (row == 5)
+                    std::cout << "3  ";
+                if (row == 6)
+                    std::cout << "2  ";
+                if (row == 7)
+                    std::cout << "1  ";
+            }
+            std::cout << "[ " << gridVisual[row][col] << " ]  ";
+            if (col == 7) {
+                std::cout << '\n';
+                if (row != 7)
+                    std::cout << '\n';
+            }
+        }
+    }
+    std::cout << "   --A------B------C------D------E------F------G------H--" << '\n';
+}
+
