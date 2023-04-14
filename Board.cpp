@@ -3,12 +3,13 @@
 //
 
 #include "Board.h"
+#include "C:\C++ headers\color-console-master\color-console-master\include\color.hpp"
 
 
 
-Board::Board() {
+Board::Board(Player& player1, Player& player2) {
     tileGrid();
-    assignPieces();
+    assignPieces(player1, player2);
 }
 
 void Board::tileGrid() {
@@ -19,7 +20,7 @@ void Board::tileGrid() {
     }
 };
 
-void Board::assignPieces() {
+void Board::assignPieces(Player& player1, Player& player2) {
     int rowIndexes[4] = {0, 1, 6, 7};
     for (int row : rowIndexes) {
         for (int col = 0; col < 8; col++) {
@@ -27,33 +28,42 @@ void Board::assignPieces() {
             int color = (row < 2) ? black : white;
 
             if (row == 1 || row == 6) {
-                grid[row][col].occupant = std::make_unique<Pawn>(color, grid[row][col].getLocation());
+                grid[row][col].occupant = std::make_shared<Pawn>(color, grid[row][col].getLocation());
             }
 
             else {
                 if (col == 0 || col == 7) {
-                    grid[row][col].occupant = std::make_unique<Rook>(color, grid[row][col].getLocation());
+                    grid[row][col].occupant = std::make_shared<Rook>(color, grid[row][col].getLocation());
                 }
                 if (col == 1 || col == 6) {
-                    grid[row][col].occupant = std::make_unique<Knight>(color, grid[row][col].getLocation());
+                    grid[row][col].occupant = std::make_shared<Knight>(color, grid[row][col].getLocation());
                 }
                 if (col == 2 || col == 5) {
-                    grid[row][col].occupant = std::make_unique<Bishop>(color, grid[row][col].getLocation());
+                    grid[row][col].occupant = std::make_shared<Bishop>(color, grid[row][col].getLocation());
                 }
                 if (col == 3) {
-                    grid[row][col].occupant = std::make_unique<King>(color, grid[row][col].getLocation());
+                    grid[row][col].occupant = std::make_shared<King>(color, grid[row][col].getLocation());
                 }
                 if (col == 4) {
-                    grid[row][col].occupant = std::make_unique<Queen>(color, grid[row][col].getLocation());
+                    grid[row][col].occupant = std::make_shared<Queen>(color, grid[row][col].getLocation());
                 }
             }
+
+            std::shared_ptr<Piece> playerPiece = grid[row][col].occupant;
+            if (color == black) {player1.playerPieces.push_back(playerPiece);}
+            else {player2.playerPieces.push_back(playerPiece);}
+
+
         }
     }
 }
 
-void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
+void Board::movePiece(Player& currentPlayer, Player& enemyPlayer, Tile& currentTile, Tile& destinationTile) {
     if (currentTile.occupant == nullptr) {
         throw std::invalid_argument("The selected tile has no piece on it");
+    }
+    if (currentTile.occupant->color != currentPlayer.color) {
+        throw std::invalid_argument("You cannot move an opponent's piece");
     }
 
     std::map<std::string, std::vector<std::pair<int, int>>> possibleMoves = currentTile.occupant->findMoves();
@@ -66,56 +76,168 @@ void Board::movePiece(Tile& currentTile, Tile& destinationTile) {
         std::cout << '\n';
     }
 
-//    std::cout << currentTile.occupant->currentLocation.first << "\n, " << currentTile.occupant->currentLocation.second << '\n';
     for (auto& pair : possibleMoves) {
         // for each movement direction, set pathBlocked to false
         bool pathBlocked = false;
 
         for (auto &move: pair.second) {
             // if we haven't reached the destination tile yet but found another piece, mark pathBlocked true
-            if ((grid[move.first][move.second].occupant != nullptr) &&
-                (destinationTile.getLocation().first != move.first || destinationTile.getLocation().second != move.second)) {
-
+            if (isBlocked(move, currentTile, destinationTile)) {
                 pathBlocked = true;
-                std::cout << "Path is Blocked at: (" << move.first << ", " << move.second << ")\n";
             }
-            if ((destinationTile.getLocation().first == move.first) &&
-                (destinationTile.getLocation().second == move.second)) {
-                std::cout << "tile location matched with move vector\n";
-                // if destination tile is eventually found in this movement direction, check if pathBlocked and
-                // that the piece is not a knight
-                if (pathBlocked && currentTile.occupant->name != "Knight") {
+
+            if ((destinationTile == move)) {
+                // if destination tile is eventually found in this movement direction, check if pathBlocked
+                // (pathBlocked also determines that the piece is not a knight)
+                if (pathBlocked) {
                     throw std::invalid_argument("Path to destination is blocked by another piece");
                 }
 
                 // at this point, our destination tile was found this movement direction and it's not blocked by
                 // any pieces leading up to it
+
+                // temp bool willCapture to mark if we need to capture an enemy piece on the destination tile
+                bool willCapture = false;
                 if (destinationTile.occupant != nullptr) {
                     std::cout << "determined destination occupant wasn't null\n";
 
                     // destination tile is occupied, so now we check to see if it's our own piece or the opponents piece
                     if (destinationTile.occupant->color == currentTile.occupant->color) {
                         throw std::invalid_argument("Can't move on top of your own piece");
-                    } else {
-                        // we capture it if it's the opponents piece
-                        captureNew(destinationTile);
-                        std::cout << "piece captured\n";
+                    }
+                    else {
+                        // we mark that the piece needs to be captured if it's the opponents piece after checking
+                        // first we negate the pawn's ability to capture if the current attempted move is not a diagonal move
+                        if (!pawnMoveDiagonal(currentTile, move)) {
+                            willCapture = false;
+                        }
+
+                        else {
+                            willCapture = true;
+                            std::cout << "piece marked to be captured\n";
+                        }
                     }
                 }
-                else { std::cout << "found to be null\n"; }
+                else {
+                    std::cout << "found to be null\n";
+                }
 
                 // now, the only things that could have happened are a.) the destination tile's piece was captured,
                 // b.) the destination tile didn't have a piece on it,
-                // so now in both instances we have to transfer the piece to the destination tile and update the piece's location
+
+                // first make sure we arent putting outselves in check
+                if (inCheck(currentPlayer, enemyPlayer, currentTile)) {
+                    throw std::invalid_argument("Can't put yourself in check");
+                }
+                // if marked to be captured, move the enemy piece on the destination tile over to a new capture tile
+                // representing the piece "graveyard"
+                if (willCapture) {
+                    captureNew(destinationTile);
+                }
+                // now in both instances we have to transfer the piece to the destination tile and update the piece's location
                 currentTile.giveOccupantTo(destinationTile);
                 destinationTile.occupant->updateLocation(destinationTile.getLocation());
                 std::cout << destinationTile.occupant->currentLocation.first << ", "
                           << destinationTile.occupant->currentLocation.second << '\n';
+
                 return;
             }
         }
     }
-    throw std::invalid_argument("Requested destination is either out of range or not in the piece's moveset\n");
+    throw std::invalid_argument("Requested destination is either out of range or not in the selected piece's moveset\n");
+}
+
+
+bool Board::inCheck(Player& currentPlayer, Player& enemyPlayer) {
+    std::shared_ptr<Piece> currentPlayersKing = currentPlayer.findPiece("King");
+
+    for (auto& enemyPiece : enemyPlayer.playerPieces) {
+        // run findMoves for all opponents pieces
+
+        std::map<std::string, std::vector<std::pair<int, int>>> possibleMoves = enemyPiece->findMoves();
+
+        for (auto& pair : possibleMoves) {
+            bool pathBlocked = false;
+
+            for (auto &move: pair.second) {
+                if (isBlocked(move,grid[enemyPiece->currentLocation.first][enemyPiece->currentLocation.second],
+                            currentPlayersKing->currentLocation)) {
+                    pathBlocked = true;
+                }
+                std::cout << enemyPiece->name << '\n' << "--------------------\n";
+                std::cout << "Path is blocked: " << std::boolalpha << pathBlocked << " - (" << move.first << ", " << move.second << ')' << '\n';
+                std::cout << "at the king's location: " << std::boolalpha << (move == currentPlayersKing->currentLocation) << "\n\n";
+                if ((!pathBlocked) && (move == currentPlayersKing->currentLocation)) {
+                    std::cout << "returning true!!";
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Board::inCheck(Player& currentPlayer, Player& enemyPlayer, Tile& currentTile) {
+    std::shared_ptr<Piece> currentPlayersKing = currentPlayer.findPiece("King");
+
+    for (auto& enemyPiece : enemyPlayer.playerPieces) {
+        // run findMoves for all opponents pieces
+
+        std::map<std::string, std::vector<std::pair<int, int>>> possibleMoves = enemyPiece->findMoves();
+
+        for (auto& pair : possibleMoves) {
+            bool pathBlocked = false;
+
+            for (auto &move: pair.second) {
+                if (move != currentTile.getLocation()) {
+                    if (isBlocked(move, grid[enemyPiece->currentLocation.first][enemyPiece->currentLocation.second],
+                                  currentPlayersKing->currentLocation)) {
+                        pathBlocked = true;
+                    }
+                }
+                std::cout << enemyPiece->name << '\n' << "--------------------\n";
+                std::cout << "Path is blocked: " << std::boolalpha << pathBlocked << " - (" << move.first << ", " << move.second << ')' << '\n';
+                std::cout << "at the king's location: " << std::boolalpha << (move == currentPlayersKing->currentLocation) << "\n\n";
+                if ((!pathBlocked) && (move == currentPlayersKing->currentLocation)) {
+                    std::cout << "returning true!!";
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Board::isBlocked(std::pair<int, int>& move, Tile& currentTile, Tile& destinationTile) {
+    if (currentTile.occupant->name != "Knight") {
+        if ((grid[move.first][move.second].occupant != nullptr) &&
+            (destinationTile.getLocation().first != move.first ||
+             destinationTile.getLocation().second != move.second)) {
+
+            std::cout << "Path is Blocked at: (" << move.first << ", " << move.second << ")\n";
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Board::isBlocked(std::pair<int, int>& move, Tile& tileBeingAssessed, std::pair<int, int>& currentPlayersKingLocation) {
+    if (tileBeingAssessed.occupant->name != "Knight") {
+        if ((grid[move.first][move.second].occupant != nullptr) &&
+            (grid[move.first][move.second] != currentPlayersKingLocation)) {
+
+//            std::cout << "Path to King Blocked at: (" << move.first << ", " << move.second << ")\n";
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Board::pawnMoveDiagonal(Tile& currentTile, std::pair<int, int>& move) {
+    if ((currentTile.occupant->name == "Pawn") && (move.second != currentTile.occupant->currentLocation.second)) {
+        return true;
+    }
+    return false;
 }
 
 
@@ -210,7 +332,8 @@ void Board::printGridVisual() {
                 if (row == 7)
                     std::cout << "1  ";
             }
-            std::cout << "[ " << gridVisual[row][col] << " ]  ";
+
+            std::cout << "[ " << dye::yellow(gridVisual[row][col]) << " ]  ";
             if (col == 7) {
                 std::cout << '\n';
                 if (row != 7)

@@ -1,29 +1,3 @@
-// 8x8 matrix holding tile objects
-// tile objects hold unique pointers to pieces
-// piece as a base class
-    // MEMBER VARIABLES
-        // type
-        // x y location
-        //
-    // MEMBER FUNCTIONS
-        // move(Tile& tile)
-            // if (!tile.occupant = nullPtr) {
-                // tile.occupant = this
+// Tiles and players hold shared pointers to the pieces
 
-
-
-/* when tile accepts a piece, the piece's location gets updated, either
- * a - holds a ptr to the tile object
- * b - the tile object holds a pointer to the piece
- * c - both
-*/
-
-
-/* Tiles create the pieces originally, and assign themselves as the piece's pointer
-so, the address of the tile should be passed to the piece during construction
-
-
-// set pieces during tiles construction
-
-// MOVEMENT
-    // piece finds what cell it occupies through
+//

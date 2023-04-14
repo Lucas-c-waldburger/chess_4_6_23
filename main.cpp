@@ -1,11 +1,10 @@
 #include <iostream>
-#include "Tile.h"
-#include "Piece.h"
 #include "Board.h"
 
 
+
 // 8x8 matrix holding tile objects
-// tile objects hold unique pointers to pieces
+// tile objects hold shared pointers to pieces
 // piece as a base class
 // MEMBER VARIABLES
 // type
@@ -18,24 +17,108 @@
 
 
 
-/* when tile accepts a piece, the piece's location gets updated, either
- * a - holds a ptr to the tile object
- * b - the tile object holds a pointer to the piece
- * c - both
+/*
+ * g++ -c main.cpp Board.cpp Tile.cpp Piece.cpp Player.cpp
+ * g++ -o main.exe main.o Board.o Tile.o Piece.o Player.o
+ * main.exe
 */
+std::pair<int, int> convertMoveInput(std::string playerMoveInput) {
+    std::pair<int, int> convertedMove;
 
+    int row = int(playerMoveInput[1] - '0');
+    int col = int(playerMoveInput[0] - 65);
 
+    convertedMove.first = abs(row - 8);
+    std::cout << convertedMove.first << " - ";
+    convertedMove.second = col;
+    std::cout << convertedMove.second << "\n\n";
+    return convertedMove;
+}
+
+//std::pair<int, int> convertMoveInput(std::pair<char, int> playerMoveInput) {
+//    std::pair<int, int> convertedMove;
+//
+//    convertedMove.first = abs(playerMoveInput.second - 8);
+//    convertedMove.second = std::tolower(playerMoveInput.first - 65);
+//
+//    return convertedMove;
+//}
+
+std::pair<std::pair<int, int>, std::pair<int, int>> getPlayerMove() {
+    std::pair<std::pair<int, int>, std::pair<int, int>> playerMove;
+
+    std::string currentLocationInput;
+    std::cout << "Move piece from: ";
+    std::cin >> currentLocationInput;
+
+    std::string destinationLocationInput;
+    std::cout << "\nTo: ";
+    std::cin >> destinationLocationInput;
+    std::cout << "\n\n";
+
+    playerMove.first = convertMoveInput(currentLocationInput);
+    playerMove.second = convertMoveInput(destinationLocationInput);
+
+    return playerMove;
+};
 
 
 int main() {
 
-    Board board;
-    board.printGridVisual();
 
-    board.movePiece(board.grid[0][1], board.grid[2][2]);
-//    board.movePiece(board.grid[2][0], board.grid[4][0]);
+    std::shared_ptr<Player> p1 = std::make_unique<Player>(white);
+    std::shared_ptr<Player> p2 = std::make_unique<Player>(black);
 
-    board.printGridVisual();
+    Board board(*p1, *p2);
+
+    int turn = 1;
+    bool gameOver = false;
+    std::shared_ptr<Player> activePlayer = p1;
+    std::shared_ptr<Player> defendingPlayer = p2;
+
+    while (!gameOver) {
+        board.printGridVisual(); std::cout << '\n';
+        std::pair<std::pair<int, int>, std::pair<int, int>> playerMove;
+
+        bool illegalMove = true;
+
+        std::cout << "\t  Turn: " << turn << '\n';
+
+        if (turn % 2 != 0) {
+            std::cout << "-------PLAYER 1 TURN-------\n";
+            activePlayer = p1;
+            defendingPlayer = p2;
+        }
+        else {
+            std::cout << "-------PLAYER 2 TURN-------\n";
+            activePlayer = p2;
+            defendingPlayer = p1;
+        }
+
+        while (illegalMove) {
+            illegalMove = false;
+            playerMove = getPlayerMove();
+
+            try {
+                board.movePiece(*activePlayer, *defendingPlayer, board.grid[playerMove.first.first][playerMove.first.second],
+                                board.grid[playerMove.second.first][playerMove.second.second]);
+            }
+            catch (std::invalid_argument &ex) {
+                std::cout << "ILLEGAL MOVE - " << ex.what() << "\nTry again!\n\n";
+                illegalMove = true;
+            }
+        }
+        turn += 1;
+    }
+
+
+
+
+
+
+
+//    std::shared_ptr<Piece> foundPiece = player1.findPiece(std::make_pair<int, int>(3, 0));
+//    std::cout << foundPiece->name;
 
 //    board.reportPieces(black);
 //

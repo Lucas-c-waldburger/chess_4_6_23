@@ -14,7 +14,7 @@ enum Color {black = 0, white = 1};
 
 class Piece {
 public:
-    Piece(int color,  std::pair<int, int> currentLocation);
+    Piece(int color, std::pair<int, int> currentLocation);
     ~Piece();
 
     int color;
@@ -24,10 +24,11 @@ public:
     std::map<std::string, std::vector<std::pair<int, int>>> movement;
 
 
+    void determineSymbol();
     void updateLocation(std::pair<int, int> newLocation);
 
-//    std::vector<std::pair<int, int>> findMoves();
     virtual std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
+
 
 private:
 
@@ -43,7 +44,7 @@ private:
 class Pawn : public Piece {
 public:
     Pawn(int color, std::pair<int, int> currentLocation);
-    std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
+    std::map<std::string, std::vector<std::pair<int, int>>> findMoves() override;
 
 };
 
