@@ -22,6 +22,40 @@
  * g++ -o main.exe main.o Board.o Tile.o Piece.o Player.o
  * main.exe
 */
+
+bool validLetterEntry(char letterEntry) {
+        bool letterValid = false;
+        char validLetterEntries[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+        for (char letter : validLetterEntries) {
+            if (letterEntry == letter) {letterValid = true;}
+        }
+        return letterValid;
+};
+
+bool validNumberEntry(char numberEntry) {
+    bool numberValid = false;
+    if (int(numberEntry) >= 49 && int(numberEntry) <= 56) {numberValid = true;}
+    return numberValid;
+};
+
+void moveInputExceptionTest(std::string& rawInput) {
+    if (std::islower(rawInput[0])) {rawInput[0] = std::toupper(rawInput[0]);}
+
+    if (rawInput.length() < 2) {
+        throw std::length_error("Your tile entry was too short\n");
+    }
+    if (rawInput.length() > 2) {
+        throw std::length_error("Your tile entry was too long\n");
+    }
+    if (!validLetterEntry(rawInput[0])) {
+        throw std::invalid_argument("Only enter letters from A - H\n");
+    }
+    if (!validNumberEntry(rawInput[1])) {
+        throw std::invalid_argument("Only enter numbers from 1 - 8\n");
+    }
+}
+
+
 std::pair<int, int> convertMoveInput(std::string playerMoveInput) {
     std::pair<int, int> convertedMove;
 
@@ -29,43 +63,52 @@ std::pair<int, int> convertMoveInput(std::string playerMoveInput) {
     int col = int(playerMoveInput[0] - 65);
 
     convertedMove.first = abs(row - 8);
-    std::cout << convertedMove.first << " - ";
     convertedMove.second = col;
-    std::cout << convertedMove.second << "\n\n";
+    std::cout << convertedMove.first << ", " << convertedMove.second << '\n';
     return convertedMove;
 }
 
-//std::pair<int, int> convertMoveInput(std::pair<char, int> playerMoveInput) {
-//    std::pair<int, int> convertedMove;
-//
-//    convertedMove.first = abs(playerMoveInput.second - 8);
-//    convertedMove.second = std::tolower(playerMoveInput.first - 65);
-//
-//    return convertedMove;
-//}
-
 std::pair<std::pair<int, int>, std::pair<int, int>> getPlayerMove() {
     std::pair<std::pair<int, int>, std::pair<int, int>> playerMove;
-
     std::string currentLocationInput;
-    std::cout << "Move piece from: ";
-    std::cin >> currentLocationInput;
-
     std::string destinationLocationInput;
-    std::cout << "\nTo: ";
-    std::cin >> destinationLocationInput;
-    std::cout << "\n\n";
 
-    playerMove.first = convertMoveInput(currentLocationInput);
-    playerMove.second = convertMoveInput(destinationLocationInput);
+    bool validEntry = false;
 
+    while (!validEntry) {
+        validEntry = true;
+
+        std::cout << "Move piece from: ";
+        std::cin >> currentLocationInput;
+        try {
+            moveInputExceptionTest(currentLocationInput);
+        }
+        catch (std::exception& ex) {
+            validEntry = false;
+            std::cout << ex.what();
+            continue;
+        }
+        playerMove.first = convertMoveInput(currentLocationInput);
+
+        std::cout << "\nTo: ";
+
+        std::cin >> destinationLocationInput;
+        try {
+            moveInputExceptionTest(destinationLocationInput);
+        }
+        catch (std::exception& ex) {
+            validEntry = false;
+            std::cout << ex.what();
+            continue;
+        }
+        playerMove.second = convertMoveInput(destinationLocationInput);
+        std::cout << "\n\n";
+    }
     return playerMove;
-};
+}
 
 
 int main() {
-
-
     std::shared_ptr<Player> p1 = std::make_unique<Player>(white);
     std::shared_ptr<Player> p2 = std::make_unique<Player>(black);
 
@@ -77,6 +120,7 @@ int main() {
     std::shared_ptr<Player> defendingPlayer = p2;
 
     while (!gameOver) {
+        system("cls");
         board.printGridVisual(); std::cout << '\n';
         std::pair<std::pair<int, int>, std::pair<int, int>> playerMove;
 

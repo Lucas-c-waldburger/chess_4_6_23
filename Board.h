@@ -14,11 +14,17 @@
 class Tile;
 class Player;
 
+class VisualTiles {
+public:
+    char tileChar;
+    int color;
+};
+
 class Board {
 public:
     Board(Player& player1, Player& player2);
     Tile grid[8][8];
-    char gridVisual[8][8];
+    VisualTiles gridVisual[8][8];
 
 
     std::vector<std::unique_ptr<Tile>> captureTiles;

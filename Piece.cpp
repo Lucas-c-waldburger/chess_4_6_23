@@ -15,11 +15,7 @@ Piece::~Piece() {
 //    std::cout << "Piece Destroyed" << std::endl;
 }
 
-void Piece::determineSymbol() {
-    if (this->color == black) {
-        this->boardSymbol = std::tolower(boardSymbol);
-    }
-}
+
 
 void Piece::updateLocation(std::pair<int, int> newLocation) {
     this->currentLocation = newLocation;
@@ -47,7 +43,6 @@ std::map<std::string, std::vector<std::pair<int, int>>> Piece::findMoves() {
 Pawn::Pawn(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "Pawn";
     this->boardSymbol = 'P';
-    determineSymbol();
 
     if (color == black) {
         this->movement["down"] = {
@@ -104,7 +99,6 @@ std::map<std::string, std::vector<std::pair<int, int>>> Pawn::findMoves() {
 Rook::Rook(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "Rook";
     this->boardSymbol = 'R';
-    determineSymbol();
 
     for (int i = 1; i <= 7; i++) {
         this->movement["up"].emplace_back(std::make_pair(i * -1, 0));
@@ -117,7 +111,6 @@ Rook::Rook(int color, std::pair<int, int> currentLocation) : Piece(color, curren
 Knight::Knight(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "Knight";
     this->boardSymbol = 'N';
-    determineSymbol();
 
     this->movement["upLeft"] = {
             std::make_pair<int, int>(-1, -2),
@@ -140,7 +133,6 @@ Knight::Knight(int color, std::pair<int, int> currentLocation) : Piece(color, cu
 Bishop::Bishop(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "Bishop";
     this->boardSymbol = 'B';
-    determineSymbol();
 
     for (int i = 1; i <= 7; i++) {
         this->movement["upLeft"].emplace_back(std::make_pair(i * -1, i * -1));
@@ -153,7 +145,6 @@ Bishop::Bishop(int color, std::pair<int, int> currentLocation) : Piece(color, cu
 King::King(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "King";
     this->boardSymbol = 'K';
-    determineSymbol();
 
     this->movement["up"] = {
             std::make_pair<int, int>(-1, 0),
@@ -184,8 +175,6 @@ King::King(int color, std::pair<int, int> currentLocation) : Piece(color, curren
 Queen::Queen(int color, std::pair<int, int> currentLocation) : Piece(color, currentLocation) {
     this->name = "Queen";
     this->boardSymbol = 'Q';
-    determineSymbol();
-
 
     for (int i = 1; i <= 7; i++) {
         this->movement["up"].emplace_back(std::make_pair(i * -1, 0));

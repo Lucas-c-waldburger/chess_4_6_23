@@ -3,7 +3,7 @@
 //
 
 #include "Board.h"
-#include "C:\C++ headers\color-console-master\color-console-master\include\color.hpp"
+#include "color-console-master/include/color.hpp"
 
 
 
@@ -296,12 +296,18 @@ void Board::reportPieces(int color) {
 
 void Board::refreshGridVisual() {
     for (int i = 0; i < 8; i++) {
+        int colorAlternate = 1;
         for (int j = 0; j < 8; j++) {
+            colorAlternate += 1;
+            if (j == 0) {colorAlternate += i;}
+
+            gridVisual[i][j].color = (colorAlternate % 2 == 0) ? white : black;
+
             if (grid[i][j].occupant != nullptr) {
-                gridVisual[i][j] = grid[i][j].occupant->boardSymbol;
+                gridVisual[i][j].tileChar = grid[i][j].occupant->boardSymbol;
             }
             else {
-                gridVisual[i][j] = ' ';
+                gridVisual[i][j].tileChar = ' ';
             }
         }
     }
@@ -311,8 +317,9 @@ void Board::refreshGridVisual() {
 void Board::printGridVisual() {
     refreshGridVisual();
 
-    std::cout << "   -----------------------------------------------------" << '\n';
+    std::cout << '\n';
     for (int row = 0; row < 8; row++) {
+        int colorAlternate = 1;
         for (int col = 0; col < 8; col++) {
             if (col == 0) {
                 if (row == 0)
@@ -332,15 +339,50 @@ void Board::printGridVisual() {
                 if (row == 7)
                     std::cout << "1  ";
             }
+            colorAlternate += 1;
+            if (col == 0) {colorAlternate += row;}
 
-            std::cout << "[ " << dye::yellow(gridVisual[row][col]) << " ]  ";
+            if (gridVisual[row][col].color == white) {
+                if (grid[row][col].occupant != nullptr) {
+                    if (grid[row][col].occupant->color == black) {
+                        std::cout << dye::purple_on_bright_white(" ")
+                                  << dye::purple_on_bright_white(gridVisual[row][col].tileChar)
+                                  << dye::purple_on_bright_white(" ");
+                    }
+                    else {
+                        std::cout << dye::yellow_on_bright_white(" ")
+                                  << dye::yellow_on_bright_white(gridVisual[row][col].tileChar)
+                                  << dye::yellow_on_bright_white(" ");
+
+                    }
+                }
+                else {
+                    std::cout << dye::purple_on_bright_white("   ");
+                }
+            }
+            else {
+                if (grid[row][col].occupant != nullptr) {
+                    if (grid[row][col].occupant->color == black) {
+                        std::cout << dye::purple_on_grey(" ")
+                                  << dye::purple_on_grey(gridVisual[row][col].tileChar)
+                                  << dye::purple_on_grey(" ");
+                    }
+                    else {
+                        std::cout << dye::yellow_on_grey(" ")
+                                  << dye::yellow_on_grey(gridVisual[row][col].tileChar)
+                                  << dye::yellow_on_grey(" ");
+                    }
+                }
+                else {
+                    std::cout << dye::purple_on_grey("   ");
+                }
+            }
+
             if (col == 7) {
                 std::cout << '\n';
-                if (row != 7)
-                    std::cout << '\n';
             }
         }
     }
-    std::cout << "   --A------B------C------D------E------F------G------H--" << '\n';
+    std::cout << "   -A--B--C--D--E--F--G--H-" << '\n';
 }
 

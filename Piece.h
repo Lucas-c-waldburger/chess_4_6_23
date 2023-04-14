@@ -23,8 +23,6 @@ public:
     std::pair<int, int> currentLocation;
     std::map<std::string, std::vector<std::pair<int, int>>> movement;
 
-
-    void determineSymbol();
     void updateLocation(std::pair<int, int> newLocation);
 
     virtual std::map<std::string, std::vector<std::pair<int, int>>> findMoves();
